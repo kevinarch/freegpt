@@ -477,7 +477,7 @@ app.use(enableCORS);
 
 // Route to handle POST requests for chat completions
 app.post("/v1/chat/completions", handleChatCompletion);
-app.post("/v1/models", handleGetModels);
+app.get("/v1/models", handleGetModels);
 
 // 404 handler for unmatched routes
 app.use((req, res) =>
