@@ -23,8 +23,7 @@ const newSessionRetries: number =
 const userAgent =
   process.env.USER_AGENT ||
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36";
-const authKey: string =
-  process.env.API_KEY || null;  // Authorized client apiKey
+const authKey: string = process.env.API_KEY || null; // Authorized client apiKey
 
 let cloudflared: ChildProcessWithoutNullStreams;
 
@@ -202,7 +201,7 @@ function enableCORS(req: Request, res: Response, next: NextFunction) {
 async function handleChatCompletion(req: Request, res: Response) {
   // If .env sets API_KEY and is not empty, the apiKey of req.headers will be verified.
   if (authKey) {
-    const clientApiKey = req.headers.authorization?.split(' ')[1] ?? "null";
+    const clientApiKey = req.headers.authorization?.split(" ")[1] ?? "null";
     if (!clientApiKey || clientApiKey != authKey) {
       console.log(
         "Request:",
@@ -217,7 +216,7 @@ async function handleChatCompletion(req: Request, res: Response) {
           error: {
             message: `Incorrect API key provided: ${clientApiKey}, Authorized access only!`,
             type: "invalid_request_error",
-            code: "invalid_api_key"
+            code: "invalid_api_key",
           },
           support: "https://discord.pawan.krd",
         })
@@ -237,8 +236,12 @@ async function handleChatCompletion(req: Request, res: Response) {
 
     if (!session) {
       console.error("Error getting a new session...");
-      console.error("If this error persists, your country may not be supported yet.");
-      console.error("If your country was the issue, please consider using a U.S. VPN or a U.S. residential proxy.");
+      console.error(
+        "If this error persists, your country may not be supported yet."
+      );
+      console.error(
+        "If your country was the issue, please consider using a U.S. VPN or a U.S. residential proxy."
+      );
       res.write(
         JSON.stringify({
           status: false,
@@ -443,6 +446,30 @@ async function handleChatCompletion(req: Request, res: Response) {
   }
 }
 
+async function handleGetModels(req: Request, res: Response) {
+  const currentTimestamp = Math.floor(Date.now() / 1000); // Current Unix timestamp
+
+  const data = {
+    object: "list",
+    data: [
+      {
+        id: "gpt-3.5-turbo",
+        object: "model",
+        created: currentTimestamp,
+        owned_by: "openai",
+      },
+      {
+        id: "gpt-4",
+        object: "model",
+        created: currentTimestamp,
+        owned_by: "openai",
+      },
+    ],
+  };
+
+  res.json(data);
+}
+
 // Initialize Express app and use middlewares
 const app = express();
 app.use(bodyParser.json());
@@ -450,6 +477,7 @@ app.use(enableCORS);
 
 // Route to handle POST requests for chat completions
 app.post("/v1/chat/completions", handleChatCompletion);
+app.post("/v1/models", handleGetModels);
 
 // 404 handler for unmatched routes
 app.use((req, res) =>
@@ -581,6 +609,7 @@ app.listen(port, async () => {
   console.log(
     `🔗 Local Endpoint: http://localhost:${port}/v1/chat/completions`
   );
+  console.log(`🔗 Local Endpoint: http://localhost:${port}/v1/models`);
   console.log();
   if (cloudflared && publicURL)
     console.log(`🔗 Public Base URL: ${publicURL}/v1`);
